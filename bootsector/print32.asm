@@ -1,7 +1,7 @@
 [bits 32]
 
 VMEM equ 0xb8000
-WHITE_ON_BLACK equ 0xfc ; color byte
+WHITE_ON_BLACK equ 0x0f ; color byte
 
 print32:
 	pusha

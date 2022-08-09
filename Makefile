@@ -1,10 +1,25 @@
+C_SOURCES = $(wildcard kernel/*.c driver/*.c)
+HEADERS = $(wildcard kernel/*.h driver/*.h)
+OBJ = ${C_SOURCES:.c=.o}
 
+CFLAGS = -Wall -std=c99 -I.
 
-all: boot.bin
+all: os.bin run
 
+os.bin: bootsector.bin kernel.bin
+	cat $^ > $@
+run: os.bin
+	qemu-system-x86_64 $<
 clean:
-	rm -f boot.bin
-	rm -f *.o
+	rm -f *.bin
+	rm -f **/*.o
 
-boot.bin: bootsect_main.asm bootsect_print.asm bootsect_print32.asm bootsect_gdt.asm bootsect_32bit.asm bootsect_disk.asm
-	nasm -f bin bootsect_main.asm -o boot.bin
+bootsector.bin: bootsector/main.asm bootsector/print.asm bootsector/disk.asm bootsector/print32.asm bootsector/gdt.asm bootsector/32bit.asm
+	nasm -f bin $< -o $@
+kernel.bin: bootsector/kentry.o ${OBJ}
+	ld -o $@ -Ttext 0x1000 $^ --oformat binary
+
+%.o: %.c ${HEADERS}
+	gcc -ffreestanding -c $< -o $@
+%.o: %.asm
+	nasm $< -felf64 -o $@
